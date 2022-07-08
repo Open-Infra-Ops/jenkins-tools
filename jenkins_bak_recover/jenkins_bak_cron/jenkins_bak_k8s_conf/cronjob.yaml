@@ -1,0 +1,61 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: jenkins-web
+  namespace: jenkins
+spec:
+  schedule: "45 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: bak-jenkins-openeuler
+            image: swr.cn-north-4.myhuaweicloud.com/openeuler/bak-jenkins:v1.1.0
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: secret
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: secret
+            - name: git_token
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: git_token
+            - name: huaweiclound_obs_url
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: huaweiclound_obs_url
+            - name: huaweiclound_obs_ak
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: huaweiclound_obs_ak
+            - name: huaweiclound_obs_sk
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: huaweiclound_obs_sk
+            - name: url
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: url
+            - name: username
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: username
+            - name: password
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-web-secret
+                  key: password
+            ports:
+            - containerPort: 80
+              name: http
+              protocol: TCP
+          restartPolicy: OnFailure

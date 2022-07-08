@@ -1,0 +1,17 @@
+README:
+1.使用最新的jenkins镜像，并使用jenkins镜像生成容器，运行容器后，登录到jenkins的网页，
+    1.新增用户
+    2.离线安装下载插件， 下载插件的网址https://github.com/opensourceways/infra-jenkins/tree/master/pkg/opengauss-jenkins.jenkins.svc.cluster.local
+    （请找pkg下对应的域名，如果有此域名则安装，如果没有此域名的则不需要安装）
+
+2.安装： pip3 install -r requirements.txt
+
+3.克隆https://github.com/Open-Infra-Ops/jenkins-tools项目，进入jenkins_bak_recover/jenkins_recover目录下，修改配置文件：jenkins_recover.yaml，具体配置内容如下：
+    jenkins_url:   jenkins网址的url
+    jenkins_username:  jenkins网址的用户名
+    jenkins_password:  jenkins网址的密码
+    bak_jenkins_domain:  需要备份的jenkins的域名： opengauss-jenkins.jenkins.svc.cluster.local
+    huaweiclound_obs_url: obs对象系统的url
+    huaweiclound_obs_ak:  obs对象系统的ak
+    huaweiclound_obs_sk:  obs对象系统的sk
+    jobs_list: []       支持备份可以选择的job,比如说: ["DataStudio_PR",] ; 如果为[]，在备份所有的job, 默认为[].

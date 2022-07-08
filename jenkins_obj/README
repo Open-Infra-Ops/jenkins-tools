@@ -1,0 +1,73 @@
+README:
+1.安装
+pip3 install python-jenkins
+
+
+2.执行命令：
+     python3 jenkins_tools.py -h
+
+    usage: jenkins_tools.py [-h] -c COMMAND [-n NAME] [-number NUMBER] [-url URL]
+                            [-u USERNAME] [-p PASSWORD]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -c COMMAND, --command COMMAND
+                            the command of
+                            /create_job/modify_job/query_job/query_jobs
+                            /create_build/query_build
+                            /create_view/modify_view/query_view/query_views
+      -n NAME, --name NAME  the name of job or build
+      -number NUMBER, --number NUMBER
+                            the number of build
+      -url URL, --url URL   The url of jenkins
+      -u USERNAME, --username USERNAME
+                            the username of jenkins user
+      -p PASSWORD, --password PASSWORD
+                            the password of jenkins user
+
+3.设置账户信息：jenkins的url、username、password
+    1. 可以在jenkins_tools.py里面设置
+        jenkins_url = "https://jenkins.osinfra.cn"
+        jenkins_username = "admin"
+        jenkins_password = "***************"
+
+    2.也可以以参数的方式传入
+        python3 jenkins_tools.py -c query_jobs -url https://jenkins.osinfra.cn -u admin -p **********
+
+4. 详细命令
+    1. 创建任务
+        1.修改create_execute_shell.sh和create_job_templates.xml
+        2.执行命令python3 jenkins_tools.py -c create_job -n job_name
+
+    2. 修改任务
+        1.先查询任务python3 jenkins_tools.py -c query_job -n job_name
+        2.修改modify_execute_shell.sh和modify_job_templates.xml
+        3.执行命令python3 jenkins_tools.py -c modify_job -n job_name
+
+    3. 查询单个任务
+        1.执行命令：python3 jenkins_tools.py -c query_job -n job_name
+
+    4. 查询所有任务
+        1.执行命令：python3 jenkins_tools.py -c query_jobs
+
+    5. 启动构建
+        1.执行命令: python3 jenkins_tools.py -c create_build -n job_name
+
+    6. 构建配置查询
+        1.执行命令: python3 jenkins_tools.py -c query_build -n job_name
+
+    7. 创建视图
+        1.修改create_view_templates.xml
+        2.执行命令python3 jenkins_tools.py -c create_view -n view_name
+
+    8. 修改视图
+        1.先查询任务python3 jenkins_tools.py -c query_view -n view_name
+        2.修改modify_view_templates.xml
+        3.执行命令python3 jenkins_tools.py -c query_view -n view_name
+
+    9. 查询单个视图
+        1.执行命令：python3 jenkins_tools.py -c query_view -n view_name
+
+    10. 查询所有的视图
+        1.执行命令：python3 jenkins_tools.py -c query_views
+

@@ -1,0 +1,16 @@
+README:
+1.部署： jenkins定时备份，将配置推到：https://github.com/opensourceways/infra-jenkins
+    1.生成docker镜像
+        docker build -t jenkins_bak_openeuler .
+
+    2.k8s中使用cronjob部署该容器； 在容器中采集对应的jenkins的资源，并将配置文件推到github上。
+
+2.部署的时候注意设置全局变量：
+    url: 备份jenkins的url
+    username:  备份jenkins的username
+    password:  备份jenkins的password
+    bak_domain:  备份jenkins的domain
+    git_token： git仓库的token
+    huaweiclound_obs_url:  对象系统的url
+    huaweiclound_obs_ak：  对象系统的ak
+    huaweiclound_obs_sk：   对象系统的sk

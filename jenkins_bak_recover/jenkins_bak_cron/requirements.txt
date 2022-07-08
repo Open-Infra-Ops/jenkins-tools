@@ -1,0 +1,7 @@
+requests==2.24.0
+jenkinsapi
+python-jenkins
+esdk-obs-python --trusted-host pypi.org
+PyYAML
+xmltodict
+lxml
