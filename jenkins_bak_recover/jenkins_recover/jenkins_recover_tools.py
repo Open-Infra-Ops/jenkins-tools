@@ -208,13 +208,6 @@ class JenkinsLib(jenkins_api.Jenkins):
                                                       valid=valid)
         return resp
 
-    def query_clouds_config(self):
-        """query clouds config"""
-        url = "%s/configureClouds" % self.baseurl
-        valid = self.requester.VALID_STATUS_CODES + [302, ]
-        resp = self.requester.post_and_confirm_status(url, valid=valid)
-        return resp.content.decode("utf-8")
-
     def get_user_lists(self):
         """get username list"""
         url = "%s/securityRealm" % self.baseurl
@@ -228,6 +221,11 @@ class JenkinsLib(jenkins_api.Jenkins):
             if username:
                 user_list.append(username.strip())
         return user_list
+
+    def get_config_xml(self):
+        """Get config.xml by groovy script"""
+        config_script = """println "cat /var/jenkins_home/config.xml".execute().text """
+        return self.run_groovy_script(config_script)
 
 
 class JenkinsTools(object):
@@ -1214,8 +1212,14 @@ class JenkinsStepTools(object):
         user_path = os.path.join(domain_path, GlobalConfig.cre_dir_name, GlobalConfig.user_name)
         users_infos = jenkins_tools.load_yaml(user_path)
         password = jenkins_tools.base64_decode(GlobalConfig.default_secret)
+        exist_user_list = jenkins_api_instance.get_user_lists()
         for name, user_info in users_infos.items():
-            jenkins_api_instance.create_user(name, password, user_info["full_name"], user_info["email"])
+            if name in exist_user_list:
+                print("user:{} is exist".format(name))
+            else:
+                ret = jenkins_api_instance.create_user(name, password, user_info["full_name"], user_info["email"])
+                print("user:{} create info:{} {} result:{}".format(name, user_info["full_name"], user_info["email"],
+                                                                   str(ret)))
 
     @func_retry(tries=2)
     def check_user(self, jenkins_api_instance, domain_path, jenkins_tools=None):
@@ -1226,15 +1230,19 @@ class JenkinsStepTools(object):
         exist_user_list = jenkins_api_instance.get_user_lists()
         not_create_user = set(users_infos.keys()) - set(exist_user_list)
         if not_create_user:
-            raise Exception("User:{} is not installed".format(not_create_user))
+            print("User:{} is not installed".format(not_create_user))
 
     @func_retry()
     def create_cloud_config(self, jenkins_api_instance, obs_client, domain):
         cloud_config_content = self.request_obs_data(obs_client, key=GlobalConfig.obs_default_config)
-        cloud_config_obj = xmltodict.parse(cloud_config_content[domain])
+        cloud_config_dict = json.loads(cloud_config_content)
+        cloud_config_obj = xmltodict.parse(cloud_config_dict[domain])
         clouds_order_dict = cloud_config_obj["hudson"]["clouds"]
         clouds_dict = json.loads(json.dumps(clouds_order_dict))
         body_data = list()
+        if not isinstance(clouds_dict, dict):
+            print("Cloud config is empty...")
+            return
         for clouds_class, clouds_info in clouds_dict.items():
             if clouds_class == "org.csanchez.jenkins.plugins.kubernetes.KubernetesCloud":
                 if isinstance(clouds_info, list):
@@ -1262,12 +1270,31 @@ class JenkinsStepTools(object):
     @func_retry(tries=2)
     def check_cloud_config(self, jenkins_api_instance, obs_client, domain):
         cloud_config_content = self.request_obs_data(obs_client, key=GlobalConfig.obs_default_config)
-        cloud_config_obj = xmltodict.parse(cloud_config_content[domain])
-        clouds_list = cloud_config_obj["hudson"]["clouds"]
-        clouds_name_list = [cloud["name"] for cloud in clouds_list]
-        clouds_config_content = jenkins_api_instance.query_clouds_config()
-        html = etree.HTML(clouds_config_content)
-        exists_clouds_name_list = html.xpath("//input[@class='jenkins-input   required']/@value")
+        cloud_config_dict = json.loads(cloud_config_content)
+        cloud_config_obj = xmltodict.parse(cloud_config_dict[domain])
+        clouds_order_dict = cloud_config_obj["hudson"]["clouds"]
+        clouds_dict = json.loads(json.dumps(clouds_order_dict))
+        if not isinstance(clouds_dict, dict):
+            print("Cloud config is empty...")
+            return
+        clouds_name_list = list()
+        for clouds_class, clouds_info in clouds_dict.items():
+            if isinstance(clouds_info, list):
+                for clouds_temp in clouds_info:
+                    clouds_name_list.append(clouds_temp["name"])
+            else:
+                clouds_name_list.append(clouds_info["name"])
+        cur_config_xml = jenkins_api_instance.get_config_xml()
+        cur_cloud_config_obj = xmltodict.parse(cur_config_xml)
+        cur_clouds_order_dict = cur_cloud_config_obj["hudson"]["clouds"]
+        cur_clouds_dict = json.loads(json.dumps(cur_clouds_order_dict))
+        exists_clouds_name_list = list()
+        for clouds_class, clouds_info in cur_clouds_dict.items():
+            if isinstance(clouds_info, list):
+                for clouds_temp in clouds_info:
+                    exists_clouds_name_list.append(clouds_temp["name"])
+            else:
+                exists_clouds_name_list.append(clouds_info["name"])
         not_create_clouds = set(clouds_name_list) - set(exists_clouds_name_list)
         if not_create_clouds:
             raise Exception("Clouds:{} is not installed".format(not_create_clouds))
