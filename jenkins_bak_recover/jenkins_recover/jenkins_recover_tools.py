@@ -58,7 +58,7 @@ class GlobalConfig(object):
 
     git_clone_cmd = "cd {} && git clone https://github.com/opensourceways/infra-jenkins.git"
 
-    install_off_pkg_domain = ["jenkins.opengauss.org", "openeulerjenkins.osinfra.cn"]
+    install_off_pkg_domain = ["jenkins.opengauss.org", "openeulerjenkins.osinfra.cn", "build.openlookeng.io"]
     install_off_pkg_dir_name = "pkg"
 
 
