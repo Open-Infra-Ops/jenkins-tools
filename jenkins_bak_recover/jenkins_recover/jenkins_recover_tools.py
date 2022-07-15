@@ -58,7 +58,7 @@ class GlobalConfig(object):
 
     git_clone_cmd = "cd {} && git clone https://github.com/opensourceways/infra-jenkins.git"
 
-    install_off_pkg_domain = ["jenkins.opengauss.org", "openeulerjenkins.osinfra.cn", "build.openlookeng.io"]
+    install_off_pkg_domain = ["jenkins.opengauss.org", "openeulerjenkins.osinfra.cn", "build.openlookeng.io", "build.mindspore.cn"]
     install_off_pkg_dir_name = "pkg"
 
 
@@ -333,6 +333,14 @@ class JenkinsTools(object):
         content = base64.b64decode(value)
         return content.decode("utf-8").strip()
 
+    @staticmethod
+    def parse_hw_vpc(exists_clouds_name_list, clouds_class, clouds_temp):
+        if clouds_class != "io.jenkins.plugins.huaweicloud.HuaweiVPC":
+            exists_clouds_name_list.append(clouds_temp["name"])
+        else:
+            temp = clouds_temp["name"].split(sep="ecs-", maxsplit=1)
+            exists_clouds_name_list.append(temp[1])
+
 
 class CredentialsTools(object):
     password_class = "com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl"
@@ -350,6 +358,7 @@ class CredentialsTools(object):
     token_class = "com.elasticbox.jenkins.k8s.plugin.auth.TokenCredentialsImpl"
     kubeconfig_class = "com.microsoft.jenkins.kubernetes.credentials.KubeconfigCredentials"
     fs_service_account_class = "org.jenkinsci.plugins.kubernetes.credentials.FileSystemServiceAccountCredential"
+    ak_sk_class = "io.jenkins.plugins.huaweicloud.credentials.HWCAccessKeyCredentials"
 
     def __init__(self, *args, **kwargs):
         super(CredentialsTools, self).__init__(*args, **kwargs)
@@ -369,6 +378,7 @@ class CredentialsTools(object):
             cls.certificateCredentials_class: ["password", "uploadedKeystoreBytes"],
             cls.token_class: ["token"],
             cls.kubeconfig_class: ["content"],
+            cls.ak_sk_class: ["accessKey", "secretKey"],
         }
         return templates
 
@@ -506,6 +516,16 @@ class CredentialsTools(object):
                                          "$class": cls.certificateCredentials_class}}
 
     @classmethod
+    def get_ak_sk_templates(cls):
+        return {"": "9", "credentials": {"scope": "GLOBAL",
+                                         "id": "",
+                                         "accessKey": "",
+                                         "secretKey": "",
+                                         "description": "",
+                                         "stapler-class": cls.ak_sk_class,
+                                         "$class": cls.ak_sk_class}}
+
+    @classmethod
     def get_params(cls, cre_info):
         if cre_info['jenkins_class'] == cls.password_class:
             cre = cls.get_password_templates()
@@ -578,6 +598,12 @@ class CredentialsTools(object):
             cre = cls.get_secret_file_templates()
             cre['credentials']['id'] = cre_info["credential_id"]
             cre['credentials']['description'] = cre_info["description"] or ""
+        elif cre_info["jenkins_class"] == cls.ak_sk_class:
+            cre = cls.get_ak_sk_templates()
+            cre['credentials']['id'] = cre_info["credential_id"]
+            cre['credentials']['description'] = cre_info["description"] or ""
+            cre['credentials']['accessKey'] = cre_info["accessKey"] or ""
+            cre['credentials']['secretKey'] = cre_info["secretKey"] or ""
         else:
             print("get_params cant to judge jenkins_class:{}, id:{}".format(cre_info["jenkins_class"],
                                                                             cre_info["credential_id"]))
@@ -942,6 +968,46 @@ class DockerCloudsTools(CloudsBaseTools):
         return body_data
 
 
+class HuaWeiVpcTools(CloudsBaseTools):
+    def __init__(self, *args, **kwargs):
+        super(HuaWeiVpcTools, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def gen_hw_vpc_templates_config(cls, templates_temp):
+        templates_list = list()
+        for templates_class, templates_dict in templates_temp.items():
+            temp_dict = copy.deepcopy(templates_dict)
+            instance_cap = temp_dict["instanceCap"]
+            img_type = temp_dict.get("imgType")
+            del temp_dict["instanceCap"]
+            del temp_dict["imgType"]
+            temp_dict["instanceCapStr"] = instance_cap
+            if img_type:
+                temp_dict["imgID"] = img_type["imageId"]
+            templates_list.append(temp_dict)
+        return cls._parse_return(templates_list)
+
+    @staticmethod
+    def parse_vpc_config(clouds_dict):
+        body_data = copy.deepcopy(clouds_dict)
+        name = copy.deepcopy(clouds_dict["name"])
+        instance_cap = copy.deepcopy(clouds_dict["instanceCap"])
+        if "templates" in body_data:
+            templates = copy.deepcopy(body_data["templates"])
+        else:
+            templates = None
+        del body_data["@plugin"]
+        del clouds_dict["name"]
+        del clouds_dict["instanceCap"]
+        body_data["cloudName"] = name
+        body_data["instanceCapStr"] = instance_cap
+        body_data["$class"] = "io.jenkins.plugins.huaweicloud.HuaweiVPC"
+        body_data["stapler-class"] = "io.jenkins.plugins.huaweicloud.HuaweiVPC"
+        if templates:
+            body_data["templates"] = HuaWeiVpcTools.gen_hw_vpc_templates_config(templates)
+        return body_data
+
+
 # noinspection PyTypeChecker
 class JenkinsStepTools(object):
     def __init__(self, *args, **kwargs):
@@ -1262,6 +1328,14 @@ class JenkinsStepTools(object):
                     print("start to parse docker clouds:{}".format(clouds_info["name"]))
                     clouds_result = DockerCloudsTools.parse_docker_config(clouds_info)
                     body_data.append(clouds_result)
+            elif clouds_class == "io.jenkins.plugins.huaweicloud.HuaweiVPC":
+                if isinstance(clouds_info, list):
+                    for clouds_temp in clouds_info:
+                        print("start to parse huawei vpc clouds:{}".format(clouds_temp["name"]))
+                        body_data.append(HuaWeiVpcTools.parse_vpc_config(clouds_temp))
+                else:
+                    print("start to parse huawei vpc clouds:{}".format(clouds_info["name"]))
+                    body_data.append(HuaWeiVpcTools.parse_vpc_config(clouds_info))
         body_cloud_data = {"cloud": body_data, "core:apply": ""}
         data = "json={}".format(json.dumps(body_cloud_data))
         ret = jenkins_api_instance.create_clouds_config(data)
@@ -1289,12 +1363,14 @@ class JenkinsStepTools(object):
         cur_clouds_order_dict = cur_cloud_config_obj["hudson"]["clouds"]
         cur_clouds_dict = json.loads(json.dumps(cur_clouds_order_dict))
         exists_clouds_name_list = list()
-        for clouds_class, clouds_info in cur_clouds_dict.items():
-            if isinstance(clouds_info, list):
-                for clouds_temp in clouds_info:
-                    exists_clouds_name_list.append(clouds_temp["name"])
-            else:
-                exists_clouds_name_list.append(clouds_info["name"])
+        if isinstance(cur_clouds_dict, dict):
+            print("Check cloud config is empty...")
+            for clouds_class, clouds_info in cur_clouds_dict.items():
+                if isinstance(clouds_info, list):
+                    for clouds_temp in clouds_info:
+                        JenkinsTools.parse_hw_vpc(exists_clouds_name_list, clouds_class, clouds_temp)
+                else:
+                    JenkinsTools.parse_hw_vpc(exists_clouds_name_list, clouds_class, clouds_info)
         not_create_clouds = set(clouds_name_list) - set(exists_clouds_name_list)
         if not_create_clouds:
             raise Exception("Clouds:{} is not installed".format(not_create_clouds))

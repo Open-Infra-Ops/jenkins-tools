@@ -199,6 +199,7 @@ class CredentialsTools(object):
     certificateCredentials_class = "com.cloudbees.plugins.credentials.impl.CertificateCredentialsImpl"
     token_class = "com.elasticbox.jenkins.k8s.plugin.auth.TokenCredentialsImpl"
     kubeconfig_class = "com.microsoft.jenkins.kubernetes.credentials.KubeconfigCredentials"
+    ak_sk_class = "io.jenkins.plugins.huaweicloud.credentials.HWCAccessKeyCredentials"
 
     @classmethod
     def get_credentials_templates(cls):
@@ -215,6 +216,7 @@ class CredentialsTools(object):
             cls.certificateCredentials_class: ["password", "uploadedKeystoreBytes"],
             cls.token_class: ["token"],
             cls.kubeconfig_class: ["content"],
+            cls.ak_sk_class: ["accessKey", "secretKey"],
         }
         return templates
 
