@@ -476,12 +476,12 @@ def bak_jenkins():
         JenkinsTools.dump_xml(plugins_path, json.dumps(all_plugins))
         print("###############6.jenkins bak tools start to bak credentials config#########")
         jenkins_api_instance = JenkinsLib(url, username, password, useCrumb=True, timeout=180)
-        credentials_data = jenkins_api_instance.get_credentials().credentials
-        credentials_dict = {key: value.__dict__ for key, value in credentials_data.items()}
-        credentials_conf_dict = JenkinsTools.get_credentials_info(jenkins_api_instance)
-        JenkinsTools.credentials_supplement(credentials_dict, credentials_conf_dict)
-        secret_dict = JenkinsTools.parse_secret(jenkins_api_instance, credentials_conf_dict, domain)
-        JenkinsTools().upload_obs_data(obs_client, secret_dict)
+        # credentials_data = jenkins_api_instance.get_credentials().credentials
+        # credentials_dict = {key: value.__dict__ for key, value in credentials_data.items()}
+        # credentials_conf_dict = JenkinsTools.get_credentials_info(jenkins_api_instance)
+        # JenkinsTools.credentials_supplement(credentials_dict, credentials_conf_dict)
+        # secret_dict = JenkinsTools.parse_secret(jenkins_api_instance, credentials_conf_dict, domain)
+        # JenkinsTools().upload_obs_data(obs_client, secret_dict)
         print("###############7.jenkins bak tools start to bak user infor#########")
         user_dict = jenkins_api_instance.get_user_dict()
         user_config_path = os.path.join(domain_path, GlobalConfig.cre_dir_name, GlobalConfig.user_name)
