@@ -1,4 +1,4 @@
-FROM openeuler/openeuler:21.03
+FROM openeuler/openeuler:22.03
 
 MAINTAINER TomNewChao<tom_toworld@163.com>
 
