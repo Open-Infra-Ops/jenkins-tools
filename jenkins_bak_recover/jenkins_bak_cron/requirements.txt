@@ -1,6 +1,6 @@
 requests==2.24.0
-jenkinsapi
-python-jenkins
+jenkinsapi==0.3.11
+python-jenkins==1.7.0
 esdk-obs-python --trusted-host pypi.org
 PyYAML
 xmltodict

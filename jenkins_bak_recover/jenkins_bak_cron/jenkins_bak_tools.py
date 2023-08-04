@@ -473,7 +473,7 @@ def bak_jenkins():
         plugins_path = os.path.join(domain_path, GlobalConfig.plugin_dir_name, GlobalConfig.plugin_name)
         JenkinsTools.dump_xml(plugins_path, json.dumps(all_plugins))
         print("###############6.jenkins bak tools start to bak credentials config#########")
-        jenkins_api_instance = JenkinsLib(url, username, password, useCrumb=True, timeout=180)
+        jenkins_api_instance = JenkinsLib(url, username, password, timeout=180, useCrumb=True)
         # credentials_data = jenkins_api_instance.get_credentials().credentials
         # credentials_dict = {key: value.__dict__ for key, value in credentials_data.items()}
         # credentials_conf_dict = JenkinsTools.get_credentials_info(jenkins_api_instance)
