@@ -503,7 +503,7 @@ def bak_jenkins():
         JenkinsTools().upload_obs_data(obs_client, clouds_config_content, GlobalConfig.obs_default_config)
         print("********2.jenkins bak tools push remote github/gitee*****")
         commit_msg = "commit_{}_{}".format(domain, str(int(time.time())))
-        cmd = GlobalConfig.git_commit_push_cmd.format(infra_jenkins_path, git_token, commit_msg)
+        cmd = GlobalConfig.git_commit_push_cmd.format(infra_jenkins_path, commit_msg)
         result = JenkinsTools.execute_cmd(cmd)
         if "error" in result or "fatal" in result:
             raise Exception("push {} failed:{}.".format(repo_name, result))
