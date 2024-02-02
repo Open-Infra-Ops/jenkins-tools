@@ -56,7 +56,7 @@ class GlobalConfig(object):
     obs_default_obj = "jenkins-secret"
     obs_default_config = "jenkins-config"
 
-    git_clone_cmd = "cd {} && git clone https://github.com/opensourceways/infra-jenkins.git"
+    git_clone_cmd = "cd {} && git clone https://github.com/opensourceways/{}.git"
 
     install_off_pkg_domain = ["jenkins.opengauss.org", "openeulerjenkins.osinfra.cn", "build.openlookeng.io", "build.mindspore.cn"]
     install_off_pkg_dir_name = "pkg"
@@ -258,6 +258,8 @@ class JenkinsTools(object):
             raise Exception("The jenkins_password of yaml is invalid")
         if data.get("bak_jenkins_domain") is None:
             raise Exception("The bak_jenkins_domain of yaml is invalid")
+        if data.get("repo_name") is None:
+            raise Exception("The repo_name of yaml is invalid")
         if data.get("huaweiclound_obs_url") is None:
             raise Exception("The huaweiclound_obs_url of yaml is invalid")
         if data.get("huaweiclound_obs_ak") is None:
@@ -1393,13 +1395,13 @@ def main():
     config_dict = JenkinsTools.load_yaml(config_path)
     JenkinsTools.check_params(config_dict)
     print("**************1.jenkins recover tools analytic parameter**************")
-    repo_name = GlobalConfig.git_clone_cmd.split(r"/")[-1].split(r".")[0]
+    repo_name = config_dict["repo_name"]
     print("**************2.jenkins recover tools recover*****************************")
     jenkins_tools = JenkinsTools()
     jenkins_step_tools = JenkinsStepTools()
     infra_jenkins_path = os.path.join(GlobalConfig.current_path, repo_name)
     jenkins_tools.rmd_dir(infra_jenkins_path)
-    result = jenkins_tools.execute_cmd(GlobalConfig.git_clone_cmd.format(GlobalConfig.current_path))
+    result = jenkins_tools.execute_cmd(GlobalConfig.git_clone_cmd.format(GlobalConfig.current_path, repo_name))
     if "error" in result or "fatal" in result:
         raise Exception("git clone {} failed:{}.".format(repo_name, result))
     website_domains_lists = list()
