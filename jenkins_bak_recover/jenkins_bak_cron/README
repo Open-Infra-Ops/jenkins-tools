@@ -7,10 +7,11 @@ README:
 
 2.部署的时候注意设置全局变量：
     url: 备份jenkins的url
-    username:  备份jenkins的username
-    password:  备份jenkins的password
-    bak_domain:  备份jenkins的domain
-    git_token： git仓库的token
-    huaweiclound_obs_url:  对象系统的url
-    huaweiclound_obs_ak：  对象系统的ak
+    username:              备份jenkins的username
+    password:              备份jenkins的password
+    bak_domain:            备份jenkins的domain
+    git_token：             git仓库的token
+    huaweiclound_obs_url:   对象系统的url
+    huaweiclound_obs_ak：   对象系统的ak
     huaweiclound_obs_sk：   对象系统的sk
+    repo_name:              保存jenkins的仓库, 比如:openeuler-jenkins-repo/opengauss-jenkins-repo/openlookeng-jenkins-repo/mindspore-jenkins-repo/osinfra-jenkins-repo

@@ -46,7 +46,7 @@ class GlobalConfig(object):
     obs_default_bucket = "obs-for-openeuler-developer"
     obs_default_obj = "jenkins-secret"
     obs_default_config = "jenkins-config"
-    git_clone_cmd = "cd {} && git clone https://{}@github.com/opensourceways/infra-jenkins.git"
+    git_clone_cmd = "cd {} && git clone https://{}@github.com/opensourceways/{}.git"
     git_commit_push_cmd = "cd {} && " \
                           "git add . && " \
                           "git commit -am {} && " \
@@ -421,14 +421,14 @@ def bak_jenkins():
     password = os.getenv('password')
     git_token = os.getenv('git_token')
     domain = os.getenv("bak_domain")
+    repo_name = os.getenv("repo_name")
     huaweiclound_obs_url = os.getenv('huaweiclound_obs_url')
     huaweiclound_obs_ak = os.getenv('huaweiclound_obs_ak')
     huaweiclound_obs_sk = os.getenv('huaweiclound_obs_sk')
-    repo_name = GlobalConfig.git_clone_cmd.split(r"/")[-1].split(r".")[0]
     print("**************1.jenkins bak tools bak*****************************")
     with TemporaryDirectory() as dirname:
         infra_jenkins_path = os.path.join(dirname, repo_name)
-        result = JenkinsTools.execute_cmd(GlobalConfig.git_clone_cmd.format(dirname, git_token))
+        result = JenkinsTools.execute_cmd(GlobalConfig.git_clone_cmd.format(dirname, git_token, repo_name))
         if "error" in result or "fatal" in result:
             raise Exception("git clone {} failed:{}.".format(repo_name, result))
         domain_path = os.path.join(infra_jenkins_path, domain)
