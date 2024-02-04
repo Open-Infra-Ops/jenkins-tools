@@ -2,8 +2,8 @@ README:
 1.安装
 pip3 install python-jenkins
 
-
-2.执行命令：
+2.执行命令: python3 jenkins_tools.py
+<1> 执行命令
      python3 jenkins_tools.py -h
 
     usage: jenkins_tools.py [-h] -c COMMAND [-n NAME] [-number NUMBER] [-url URL]
@@ -25,7 +25,7 @@ pip3 install python-jenkins
       -p PASSWORD, --password PASSWORD
                             the password of jenkins user
 
-3.设置账户信息：jenkins的url、username、password
+<2>.设置账户信息：jenkins的url、username、password
     1. 可以在jenkins_tools.py里面设置
         jenkins_url = "https://jenkins.osinfra.cn"
         jenkins_username = "admin"
@@ -34,7 +34,7 @@ pip3 install python-jenkins
     2.也可以以参数的方式传入
         python3 jenkins_tools.py -c query_jobs -url https://jenkins.osinfra.cn -u admin -p **********
 
-4. 详细命令
+<3>. 详细命令
     1. 创建任务
         1.修改create_execute_shell.sh和create_job_templates.xml
         2.执行命令python3 jenkins_tools.py -c create_job -n job_name
@@ -70,4 +70,13 @@ pip3 install python-jenkins
 
     10. 查询所有的视图
         1.执行命令：python3 jenkins_tools.py -c query_views
+
+
+3.执行命令: python3 clear_workspace.py --url http://192.168.1.82:8080 --username Tom_zc --password xxxxxx
+
+<1> 报错：TypeError: 'bytes' object does not support item assignment
+参考：https://blog.csdn.net/qq_17592003/article/details/118929312, 去掉b''
+
+<2> 执行脚本
+     python3 clear_workspace.py --url http://192.168.1.82:8080 --username Tom_zc --password xxxxxx
 
