@@ -46,7 +46,7 @@ class GlobalConfig(object):
     obs_default_bucket = "obs-for-openeuler-developer"
     obs_default_obj = "jenkins-secret"
     obs_default_config = "jenkins-config"
-    git_clone_cmd = "cd {} && git clone https://{}@gitee.com/opensourceway/{}.git"
+    git_clone_cmd = "cd {} && git clone https://{}:{}@gitee.com/opensourceway/{}.git"
     git_commit_push_cmd = "cd {} && " \
                           "git add . && " \
                           "git commit -am {} && " \
@@ -420,6 +420,7 @@ def bak_jenkins():
     username = os.getenv('username')
     password = os.getenv('password')
     git_token = os.getenv('git_token')
+    git_user = os.getenv('git_user')
     domain = os.getenv("bak_domain")
     repo_name = os.getenv("repo_name")
     huaweiclound_obs_url = os.getenv('huaweiclound_obs_url')
@@ -428,7 +429,7 @@ def bak_jenkins():
     print("**************1.jenkins bak tools bak*****************************")
     with TemporaryDirectory() as dirname:
         infra_jenkins_path = os.path.join(dirname, repo_name)
-        result = JenkinsTools.execute_cmd(GlobalConfig.git_clone_cmd.format(dirname, git_token, repo_name))
+        result = JenkinsTools.execute_cmd(GlobalConfig.git_clone_cmd.format(dirname, git_user, git_token, repo_name))
         if "error" in result or "fatal" in result:
             raise Exception("git clone {} failed:{}.".format(repo_name, result))
         domain_path = os.path.join(infra_jenkins_path, domain)
