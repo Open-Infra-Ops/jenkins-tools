@@ -50,7 +50,7 @@ class GlobalConfig(object):
     git_commit_push_cmd = "cd {} && " \
                           "git add . && " \
                           "git commit -am {} && " \
-                          "git push -u origin main"
+                          "git push -u origin master"
 
 
 def func_retry(tries=3, delay=1):
