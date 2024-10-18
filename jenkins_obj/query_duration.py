@@ -86,6 +86,11 @@ class CSVtools(object):
             data = ",".join(list_data[-2].split(","))
             new_list_data[-1] = data
         new_list_data[-1] = new_list_data[-1].replace("\n", "")
+        if len(new_list_data) > 5:
+            new_list = list()
+            new_list.extend(new_list_data[0:4])
+            new_list.append(",".join(new_list_data[4:]))
+            return new_list
         return new_list_data
 
     @classmethod
@@ -170,7 +175,7 @@ def workflow(job_names, url, username, password):
 @click.option("--path", help='the prefix of job path')
 @click.option("--filename", help='the output the filename')
 def main(url, username, password, path, filename):
-    batch_size = 50
+    batch_size = 20
     filtered_job = list()
     all_tasks = list()
 
@@ -194,11 +199,11 @@ def main(url, username, password, path, filename):
     logger.info("find the need to handler_data_count:{}".format(len(filtered_job)))
 
     # multi thread to batch handler
-    executor = ThreadPoolExecutor(max_workers=50)
+    executor = ThreadPoolExecutor(max_workers=20)
     for job_index in range(0, len(filtered_job), batch_size):
         splits_list = filtered_job[job_index:job_index + batch_size]
         all_tasks.append(executor.submit(workflow, splits_list, url, username, password))
-        time.sleep(random.uniform(60, 120))
+        time.sleep(random.uniform(3, 5))
     wait(all_tasks, return_when=ALL_COMPLETED)
 
     # write to filename
