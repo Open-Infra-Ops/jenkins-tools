@@ -13,6 +13,7 @@ import yaml
 import subprocess
 import shutil
 import traceback
+import requests
 import xmltodict
 import copy
 from collections import defaultdict
@@ -111,10 +112,23 @@ class JenkinsLib(jenkins_api.Jenkins):
         return self.run_groovy_script(credentials_script)
 
     def get_user_info(self, username):
-        """Get user info by username"""
-        url = "%s/user/%s/configure" % (self.baseurl, username)
+        """Get user info by username via REST API"""
+        import urllib.parse
+        tree = urllib.parse.quote("fullName,property[address]", safe=",:")
+        encoded_name = urllib.parse.quote(username, safe="")
+        url = "%s/user/%s/api/json?tree=%s" % (self.baseurl, encoded_name, tree)
         resp = self.requester.get_url(url)
-        return resp.content.decode("utf-8")
+        try:
+            data = json.loads(resp.content.decode("utf-8"))
+        except (json.JSONDecodeError, ValueError):
+            return {"full_name": username, "email": ""}
+        full_name = data.get("fullName", username)
+        email = ""
+        for prop in (data.get("property") or []):
+            if "address" in prop:
+                email = prop["address"]
+                break
+        return {"full_name": full_name, "email": email}
 
     def get_all_user(self):
         """Get all user"""
@@ -135,14 +149,14 @@ class JenkinsLib(jenkins_api.Jenkins):
         act_users_list = self.get_all_user()
         ret_dict = defaultdict(dict)
         for username in act_users_list:
-            userinfo = self.get_user_info(username)
-            html = etree.HTML(userinfo)
-            full_name = html.xpath("//input[@name='_.fullName']/@value")[0]
-            email = html.xpath("//input[@name='email.address']/@value")[0]
-            ret_dict[username] = {
-                "full_name": str(full_name),
-                "email": str(email),
-            }
+            try:
+                userinfo = self.get_user_info(username)
+                ret_dict[username] = {
+                    "full_name": str(userinfo["full_name"]),
+                    "email": str(userinfo["email"]),
+                }
+            except Exception as e:
+                print("Skip user '{}': {}".format(username, e))
         return ret_dict
 
     def get_configure_security(self):
@@ -464,13 +478,23 @@ def bak_jenkins():
         all_nodes = jenkins_instance.get_nodes()
         for node in all_nodes:
             node_name = node["name"]
-            if node_name == "Built-In Node" or node_name == "master":
+            if node_name.lower() in ("built-in node", "master", "built-in"):
                 continue
-            node_config = jenkins_instance.get_node_config(node_name)
+            try:
+                node_config = jenkins_instance.get_node_config(node_name)
+            except jenkins.JenkinsException as e:
+                print("Skip node '{}': {}".format(node_name, e))
+                continue
             nodes_path = os.path.join(domain_path, GlobalConfig.node_dir_name, "{}.xml".format(node_name))
             JenkinsTools.dump_xml(nodes_path, node_config)
         print("###############5.jenkins bak tools start to bak plugins config#########")
-        all_plugins = jenkins_instance.get_plugins_info()
+        try:
+            all_plugins = jenkins_instance.get_plugins_info()
+        except Exception as e:
+            print("get_plugins_info failed ({}), using raw API".format(e))
+            url = jenkins_instance.server + "/pluginManager/api/json?depth=2"
+            all_plugins = json.loads(jenkins_instance.jenkins_open(
+                requests.Request('GET', url)))["plugins"]
         plugins_path = os.path.join(domain_path, GlobalConfig.plugin_dir_name, GlobalConfig.plugin_name)
         JenkinsTools.dump_xml(plugins_path, json.dumps(all_plugins))
         print("###############6.jenkins bak tools start to bak credentials config#########")
